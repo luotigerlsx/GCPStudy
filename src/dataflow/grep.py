@@ -23,9 +23,14 @@ def my_grep(line, term):
         yield line
 
 
+class ToString(beam.DoFn):
+    def process(self, element, *args, **kwargs):
+        return [element[0] + str(element[1])]
+
+
 if __name__ == '__main__':
     p = beam.Pipeline(argv=sys.argv)
-    input = '../javahelp/src/main/java/com/google/cloud/training/dataanalyst/javahelp/*.java'
+    input = './javahelp/src/main/java/com/google/cloud/training/dataanalyst/javahelp/*.java'
     output_prefix = '/tmp/output'
     searchTerm = 'import'
 
@@ -34,9 +39,14 @@ if __name__ == '__main__':
      | 'GetJava' >> beam.io.ReadFromText(input)
      | 'Grep' >> beam.FlatMap(lambda line: my_grep(line, searchTerm))
      | 'Split' >> beam.FlatMap(lambda line: [(item, 1) for item in line.split(' ')])
-     | 'Count' >> beam.CombinePerKey(lambda values: sum(values))
-     | 'ToString' >> beam.Map(lambda x: x[0] + str(x[1]))
+     | beam.GroupByKey()
+     | beam.Map(lambda x: (x[0], list(x[1])))
+     # | 'Count' >> beam.CombinePerKey(lambda values: sum(values))
+     # | 'ToString' >> beam.Map(lambda x: x[0] + str(x[1]))
+     # | 'ToString' >> beam.FlatMap(lambda x: [x[0] + str(x[1])])
+     # | 'ToString' >> beam.ParDo(ToString())
      | 'write' >> beam.io.WriteToText(output_prefix)
      )
+
 
     p.run().wait_until_finish()

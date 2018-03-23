@@ -12,7 +12,8 @@ def make_input_fn(df):
         # convert the pandas column values to float
         t = tf.constant(pdcol.astype('float32').values)
         # take the column which is of shape (N) and make it (N, 1)
-        return tf.expand_dims(t, -1)
+        # return tf.expand_dims(t, -1)
+        return t
 
     def input_fn():
         features = {k: pandas_to_tf(df[k]) for k in FEATURES}
@@ -52,5 +53,5 @@ tf.logging.set_verbosity(tf.logging.INFO)
 shutil.rmtree('taxi_trained', ignore_errors=True)  # start fresh each time
 model = tf.contrib.learn.DNNRegressor(hidden_units=[32, 8, 2],
                                       feature_columns=make_feature_cols(), model_dir='taxi_trained')
-model.fit(input_fn=make_input_fn(df_train), steps=100);
+model.fit(input_fn=make_input_fn(df_train), steps=100)
 print_rmse(model, 'validation', make_input_fn(df_valid))

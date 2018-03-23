@@ -25,8 +25,9 @@ def read_dataset(filename, num_epochs=None,
                  batch_size=512,
                  mode=tf.contrib.learn.ModeKeys.TRAIN):
     def _input_fn():
+        input_files_names = tf.train.match_filenames_once(filename)
         filename_queue = tf.train.string_input_producer(
-            [filename],
+            input_files_names,
             num_epochs=num_epochs,
             shuffle=True)
         reader = tf.TextLineReader()
