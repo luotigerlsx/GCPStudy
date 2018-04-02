@@ -14,5 +14,3 @@ with tf.Session() as sess:
     print(sess.run(next_element))  # ==> ([4, 5, 6,   7],   [-4, -5,  -6,  -7])
     print(sess.run(next_element))  # ==> ([8, 9, 10, 11],   [-8, -9, -10, -11])
 
-
-tf.feature_column.input_layer

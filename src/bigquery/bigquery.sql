@@ -9,9 +9,7 @@ WITH
     `bigquery-public-data.github_repos.commits`,
     UNNEST(difference) diff
   WHERE
-    EXTRACT(YEAR
-    FROM
-      author.date)=2016 )
+    EXTRACT(YEAR FROM author.date)=2016 )
 SELECT
   lang,
   COUNT(path) AS numcommits

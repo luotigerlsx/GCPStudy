@@ -189,43 +189,6 @@ def train_and_evaluate(args):
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
 
-# # If we want to use TFRecords instead of CSV
-# def gzip_reader_fn():
-#     return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
-#         compression_type=tf.python_io.TFRecordCompressionType.GZIP))
-#
-#
-# def generate_tfrecord_input_fn(data_paths, num_epochs=None, batch_size=512, mode=tf.estimator.ModeKeys.TRAIN):
-#     def get_input_features():
-#         # Read the tfrecords. Same input schema as in preprocess
-#         input_schema = {}
-#         if mode != tf.estimator.ModeKeys.INFER:
-#             input_schema[LABEL_COLUMN] = tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0)
-#         for name in ['dayofweek', 'key']:
-#             input_schema[name] = tf.FixedLenFeature(shape=[1], dtype=tf.string, default_value='null')
-#         for name in ['hourofday']:
-#             input_schema[name] = tf.FixedLenFeature(shape=[1], dtype=tf.int64, default_value=0)
-#         for name in SCALE_COLUMNS:
-#             input_schema[name] = tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0)
-#
-#         # How?
-#         keys, features = tf.contrib.learn.io.read_keyed_batch_features(
-#             data_paths[0] if len(data_paths) == 1 else data_paths,
-#             batch_size,
-#             input_schema,
-#             reader=gzip_reader_fn,
-#             reader_num_threads=4,
-#             queue_capacity=batch_size * 2,
-#             randomize_input=(mode != tf.estimator.ModeKeys.EVAL),
-#             num_epochs=(1 if mode == tf.estimator.ModeKeys.EVAL else num_epochs))
-#         target = features.pop(LABEL_COLUMN)
-#         features[KEY_FEATURE_COLUMN] = keys
-#         return add_engineered(features), target
-#
-#     # Return a function to input the features into the model from a data path.
-#     return get_input_features
-
-
 def get_eval_metrics():
     return {
         'rmse': tflearn.MetricSpec(metric_fn=metrics.streaming_root_mean_squared_error),
