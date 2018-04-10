@@ -34,7 +34,7 @@ INPUT_COLUMNS = [
                          ' Preschool', ' 12th']
     ),
     tf.feature_column.categorical_column_with_vocabulary_list(
-        key='marital-status',
+        key='marital_status',
         vocabulary_list=[' Never-married', ' Married-civ-spouse', ' Divorced',
                          ' Married-spouse-absent', ' Separated', ' Married-AF-spouse',
                          ' Widowed']
