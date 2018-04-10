@@ -9,6 +9,7 @@ import logging
 
 import apache_beam as beam
 import apache_beam.transforms.window as window
+import apache_beam.transforms.trigger as trigger
 import apache_beam.transforms.combiners as comb
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
@@ -93,7 +94,8 @@ if __name__ == '__main__':
 
     parsed_lines = lines | 'ParseAsLine' >> beam.Map(lambda x: LineInfo(x))
     (parsed_lines
-     | 'Window' >> beam.WindowInto(window.SlidingWindows(average_interval, average_frequency))
+     | 'Window' >> beam.WindowInto(window
+                                   .SlidingWindows(average_interval, average_frequency))
      | 'BySensor' >> beam.Map(lambda x: (x.get_sensor_key(), x.speed))
      | 'AvgBySensor' >> comb.Mean.PerKey()
      | 'Print' >> beam.ParDo(print)
@@ -108,6 +110,7 @@ if __name__ == '__main__':
                 schema=schema,  # Pass the defined table_schema
                 create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND))
+
 
     result = p.run()
     result.wait_until_finish()

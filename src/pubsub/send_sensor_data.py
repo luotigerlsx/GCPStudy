@@ -21,7 +21,6 @@ import argparse
 import datetime
 from google.cloud import pubsub
 
-
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TOPIC = 'sandiego'
 INPUT = '/Users/luoshixin/Downloads/sensor_obs2008.csv.gz'
@@ -49,6 +48,11 @@ def simulate(topic, ifp, firstObsTime, programStart, speedFactor):
         to_sleep_secs = sim_time_elapsed - time_elapsed
         return to_sleep_secs
 
+    '''
+    The message data in Pub/Sub is an opaque blob of bytes, and as such, 
+    you must send a bytes object in Python 3 (str object in Python 2). 
+    If you send a text string (str in Python 3, unicode in Python 2), the method will raise TypeError
+    '''
     topublish = list()
 
     for line in ifp:
@@ -88,10 +92,13 @@ if __name__ == '__main__':
     parser.add_argument('--project', help='Example: --project $DEVSHELL_PROJECT_ID', required=True)
     args = parser.parse_args()
 
-    # create Pub/Sub notification topic
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
-    publisher = pubsub.PublisherClient()
+    # initiate client with batch configuration
+    publisher = pubsub.PublisherClient(
+        batch_settings=pubsub.types.BatchSettings(max_messages=500),
+    )
+    # create Pub/Sub notification topic
     event_type = publisher.topic_path(args.project, TOPIC)
 
     try:
