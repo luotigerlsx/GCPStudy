@@ -72,6 +72,8 @@ def cnn_model_fn(features, labels, mode):
         train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
+    tf.metrics.mean
+
     eval_metric_ops = {
         'accuracy': tf.metrics.accuracy(labels=labels, predictions=predictions['classes'])
     }
@@ -90,9 +92,9 @@ def main(unused_argv):
     mnist_classifier = tf.estimator.Estimator(
         model_fn=cnn_model_fn, model_dir="/tmp/mnist_convnet_model")
 
-    tensors_to_log = {"probabilities": "softmax_tensor"}
-    logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=50)
+    # tensors_to_log = {"probabilities": "softmax_tensor"}
+    # logging_hook = tf.train.LoggingTensorHook(
+    #     tensors=tensors_to_log, every_n_iter=50)
 
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": train_data},
@@ -102,8 +104,7 @@ def main(unused_argv):
         shuffle=True)
     mnist_classifier.train(
         input_fn=train_input_fn,
-        steps=2000,
-        hooks=[logging_hook])
+        steps=2000)
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": eval_data},

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 MODEL_DIR=./tmp/
 TRAIN_DATA=~/Downloads/data/adult.data.csv
 EVAL_DATA=~/Downloads/data/adult.test.csv
