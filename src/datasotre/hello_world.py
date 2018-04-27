@@ -34,6 +34,8 @@ def run_quickstart():
     task = datastore.Entity(key=task_key)
     task['description'] = 'Buy milk'
 
+    datastore_client.get()
+
     # Saves the entity
     datastore_client.put(task)
 

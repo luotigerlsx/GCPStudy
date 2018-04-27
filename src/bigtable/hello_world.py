@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument(
         'instance_id', help='ID of the Cloud Bigtable instance to connect to.')
     parser.add_argument(
-        '--table',
+        'table',
         help='Table to create and destroy.',
         default='Hello-Bigtable')
 
