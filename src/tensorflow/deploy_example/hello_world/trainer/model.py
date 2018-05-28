@@ -11,11 +11,12 @@ import tensorflow as tf
 CSV_COLUMNS = ['age', 'workclass', 'fnlwgt', 'education', 'education_num',
                'marital_status', 'occupation', 'relationship', 'race', 'gender',
                'capital_gain', 'capital_loss', 'hours_per_week',
-               'native_country', 'income_bracket']
+               'native_country', 'income_bracket', 'key']
 CSV_COLUMN_DEFAULTS = [[0], [''], [0], [''], [0], [''], [''], [''], [''], [''],
-                       [0], [0], [0], [''], ['']]
+                       [0], [0], [0], [''], [''], ['nonkey']]
 LABEL_COLUMN = 'income_bracket'
 LABELS = [' <=50K', ' >50K']
+KEY_COLUMN = 'key'
 
 INPUT_COLUMNS = [
     # Categorical based column
@@ -78,6 +79,29 @@ INPUT_COLUMNS = [
 UNUSED_COLUMNS = set(CSV_COLUMNS) - {col.name for col in INPUT_COLUMNS} - \
                  {LABEL_COLUMN}
 
+UNUSED_COLUMNS.remove(KEY_COLUMN)
+
+
+def forward_key_to_export(estimator):
+    estimator = tf.contrib.estimator.forward_features(estimator, KEY_COLUMN)
+    # return estimator
+
+    ## This shouldn't be necessary (I've filed CL/187793590 to update extenders.py with this code)
+    config = estimator.config
+
+    def model_fn2(features, labels, mode):
+        estimatorSpec = estimator._call_model_fn(features, labels, mode, config=config)
+        if estimatorSpec.export_outputs:
+            for ekey in ['predict', 'serving_default']:
+                if (ekey in estimatorSpec.export_outputs and
+                        isinstance(estimatorSpec.export_outputs[ekey],
+                                   tf.estimator.export.PredictOutput)):
+                    estimatorSpec.export_outputs[ekey] = \
+                        tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+        return estimatorSpec
+
+    return tf.estimator.Estimator(model_fn=model_fn2, config=config)
+
 
 def build_estimator(config, embedding_size=8, hidden_units=None):
     (gender, race, education, marital_status, relationship,
@@ -107,12 +131,22 @@ def build_estimator(config, embedding_size=8, hidden_units=None):
         tf.feature_column.embedding_column(native_country, dimension=embedding_size)
     ]
 
-    return tf.estimator.DNNLinearCombinedClassifier(
+    def my_metric(labels, predictions):
+        pred_values = predictions['class_ids']
+        return {'hp_auc': tf.metrics.auc(labels, pred_values)}
+
+    estimator = tf.estimator.DNNLinearCombinedClassifier(
         config=config,
         dnn_feature_columns=dense_columns,
         linear_feature_columns=wide_columns,
         dnn_hidden_units=hidden_units or [100, 70, 50, 25]
     )
+
+    estimator = tf.contrib.estimator.add_metrics(estimator, my_metric)
+
+    estimator = forward_key_to_export(estimator)
+
+    return estimator
 
 
 def parse_label_column(label_string_tensor):
@@ -135,7 +169,7 @@ def parse_label_column(label_string_tensor):
 def parse_csv(csv_string):
     """Parse a input string with csv format for a dictionary {feature_name: feature}
     """
-    columns = tf.decode_csv(csv_string, record_defaults=CSV_COLUMN_DEFAULTS)
+    columns = tf.decode_csv(csv_string + ',', record_defaults=CSV_COLUMN_DEFAULTS)
     features = dict(zip(CSV_COLUMNS, columns))
     for col in UNUSED_COLUMNS:
         features.pop(col)
@@ -181,7 +215,14 @@ def json_serving_input_fn():
     for feat in INPUT_COLUMNS:
         inputs[feat.name] = tf.placeholder(shape=[None], dtype=feat.dtype)
 
-    return tf.estimator.export.ServingInputReceiver(inputs, inputs)
+    inputs[KEY_COLUMN] = tf.placeholder_with_default(tf.constant(['nokey']), [None])
+
+    features = {
+        key: tf.expand_dims(tensor, -1)
+        for key, tensor in inputs.items()
+    }
+
+    return tf.estimator.export.ServingInputReceiver(features, inputs)
 
 
 # [END serving-function]

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-JOB_NAME=hello_world_cloud_ml
+JOB_NAME=hello_world_cloud_ml_key2
 
 TRAIN_DATA=gs://testl-bucket/data/adult.data.csv
 EVAL_DATA=gs://testl-bucket/data/adult.test.csv

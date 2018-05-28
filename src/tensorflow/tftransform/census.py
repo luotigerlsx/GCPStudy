@@ -6,9 +6,9 @@ from __future__ import print_function
 
 import argparse
 
+from datetime import datetime
 import os
 import shutil
-import pprint
 import tempfile
 
 import tensorflow as tf
@@ -80,7 +80,7 @@ def create_raw_meta():
 RAW_DATA_META = create_raw_meta()
 
 
-def transform_data(train_data_file, test_data_file, working_dir):
+def transform_data(train_data_file, test_data_file, working_dir, pipeline):
     def pre_processing_fun(inputs):
         outputs = {}
 
@@ -98,66 +98,64 @@ def transform_data(train_data_file, test_data_file, working_dir):
 
         return outputs
 
-    with beam.Pipeline() as pipeline:
-        with beam_impl.Context(temp_dir=tempfile.mktemp()):
-            converter = csv_coder.CsvCoder(ORDERED_COLUMNS, RAW_DATA_META.schema)
+    converter = csv_coder.CsvCoder(ORDERED_COLUMNS, RAW_DATA_META.schema)
 
-            '''
-            Transform and save test data
-            '''
-            raw_train_data = (
-                    pipeline
-                    | "Read raw train input" >> beam.io.textio.ReadFromText(train_data_file)
-                    | "Filter train line" >> beam.Filter(lambda x: x)
-                    | "Fix commas train data" >> beam.Map(lambda x: x.replace(', ', ','))
-                    | "Decode train as csv" >> beam.Map(converter.decode)
-            )
+    '''
+    Transform and save train data
+    '''
+    raw_train_data = (
+            pipeline
+            | "Read raw train input" >> beam.io.textio.ReadFromText(train_data_file)
+            | "Filter train line" >> beam.Filter(lambda x: x)
+            | "Fix commas train data" >> beam.Map(lambda x: x.replace(', ', ','))
+            | "Decode train as csv" >> beam.Map(converter.decode)
+    )
 
-            raw_train_dataset = (raw_train_data, RAW_DATA_META)
+    raw_train_dataset = (raw_train_data, RAW_DATA_META)
 
-            transformed_train_dataset, transform_fn = (
-                    raw_train_dataset | beam_impl.AnalyzeAndTransformDataset(pre_processing_fun))
+    transformed_train_dataset, transform_fn = (
+            raw_train_dataset | beam_impl.AnalyzeAndTransformDataset(pre_processing_fun))
 
-            transformed_train_data, transformed_train_meta = transformed_train_dataset
+    transformed_train_data, transformed_train_meta = transformed_train_dataset
 
-            # Save transformed training data
-            (transformed_train_data
-             | "Save transformed train data" >> beam.io.tfrecordio.WriteToTFRecord(
-                        os.path.join(working_dir, TRANSFORMED_TRAIN_DATA_FILEBASE),
-                        coder=example_proto_coder.ExampleProtoCoder(
-                            transformed_train_meta.schema))
-             )
+    # Save transformed training data
+    (transformed_train_data
+     | "Save transformed train data" >> beam.io.tfrecordio.WriteToTFRecord(
+                os.path.join(working_dir, TRANSFORMED_TRAIN_DATA_FILEBASE),
+                coder=example_proto_coder.ExampleProtoCoder(
+                    transformed_train_meta.schema))
+     )
 
-            '''
-            Transform and save test data
-            '''
-            raw_test_data = (
-                    pipeline
-                    | "Read raw test input" >> beam.io.textio.ReadFromText(test_data_file)
-                    | "Filter test line" >> beam.Filter(lambda x: x)
-                    | "Fix commas test data" >> beam.Map(lambda x: x.replace(', ', ','))
-                    | "Decode test as csv" >> beam.Map(converter.decode)
-            )
+    '''
+    Transform and save test data
+    '''
+    raw_test_data = (
+            pipeline
+            | "Read raw test input" >> beam.io.textio.ReadFromText(test_data_file)
+            | "Filter test line" >> beam.Filter(lambda x: x)
+            | "Fix commas test data" >> beam.Map(lambda x: x.replace(', ', ','))
+            | "Decode test as csv" >> beam.Map(converter.decode)
+    )
 
-            raw_test_dataset = (raw_test_data, RAW_DATA_META)
+    raw_test_dataset = (raw_test_data, RAW_DATA_META)
 
-            transformed_test_dataset = (raw_test_dataset, transform_fn) | beam_impl.TransformDataset()
+    transformed_test_dataset = (raw_test_dataset, transform_fn) | beam_impl.TransformDataset()
 
-            transformed_test_data, _ = transformed_test_dataset
+    transformed_test_data, _ = transformed_test_dataset
 
-            # Save transformed training data
-            (transformed_test_data
-             | "Save transformed test data" >> beam.io.tfrecordio.WriteToTFRecord(
-                        os.path.join(working_dir, TRANSFORMED_TEST_DATA_FILEBASE),
-                        coder=example_proto_coder.ExampleProtoCoder(
-                            transformed_train_meta.schema))
-             )
+    # Save transformed test data
+    (transformed_test_data
+     | "Save transformed test data" >> beam.io.tfrecordio.WriteToTFRecord(
+                os.path.join(working_dir, TRANSFORMED_TEST_DATA_FILEBASE),
+                coder=example_proto_coder.ExampleProtoCoder(
+                    transformed_train_meta.schema))
+     )
 
-            '''
-            Save transform function
-            '''
-            (transform_fn
-             | 'WriteTransformFn' >> transform_fn_io.WriteTransformFn(working_dir))
+    '''
+    Save transform function
+    '''
+    (transform_fn
+     | 'WriteTransformFn' >> transform_fn_io.WriteTransformFn(working_dir))
 
 
 def make_input_function(working_dir,
@@ -241,13 +239,7 @@ def train_and_evaluate(working_dir):
             key, num_buckets=num_buckets)
         for key, num_buckets in zip(CATEGORICAL_FEATURE_KEYS, BUCKET_SIZES)]
 
-    lestimator = tf.estimator.LinearRegressor(real_valued_columns + one_hot_columns)
-
-    # lestimator.train(
-    #     input_fn=make_input_function(
-    #         working_dir, TRANSFORMED_TRAIN_DATA_FILEBASE),
-    #     max_steps=1000
-    # )
+    lestimator = tf.estimator.LinearClassifier(real_valued_columns + one_hot_columns, n_classes=2)
 
     train_input = make_input_function(
         working_dir, TRANSFORMED_TRAIN_DATA_FILEBASE)
@@ -257,7 +249,7 @@ def train_and_evaluate(working_dir):
         working_dir, TRANSFORMED_TEST_DATA_FILEBASE)
 
     train_spec = tf.estimator.TrainSpec(train_input,
-                                        max_steps=1000)
+                                        max_steps=10000)
 
     exporter = tf.estimator.FinalExporter('census',
                                           make_serving_input_fn(working_dir))
@@ -278,15 +270,51 @@ def train_and_evaluate(working_dir):
 
 
 if __name__ == '__main__':
-    working_dir = '/Users/luoshixin/Personal/GCPStudy/src/tensorflow/tftransform/tmp1/'
-    data_dir = '/Users/luoshixin/Downloads/data'
-    train_data_file = os.path.join(data_dir, 'adult.data.csv')
-    test_data_file = os.path.join(data_dir, 'adult.test.csv')
-
-    if os.path.exists(working_dir):
-        shutil.rmtree(working_dir)
 
     tf.logging.set_verbosity('INFO')
+    parser = argparse.ArgumentParser(description='First Trial')
+    parser.add_argument('--cloud', default=False, action='store_true')
 
-    transform_data(train_data_file, test_data_file, working_dir)
-    train_and_evaluate(working_dir)
+    options, pipeline_args = parser.parse_known_args()
+
+    bucket_name = 'testl-bucket'
+    project_id = 'woven-rush-197905'
+
+    job_options = {"project": project_id}
+    if options.cloud:
+
+        runner = "DataflowRunner"
+        print('Using Dataflow for data transformation')
+
+        working_dir = 'gs://{0}/tft/workingdir/'.format(bucket_name)
+        data_dir = 'gs://{0}/data/'.format(bucket_name)
+
+        job_options.update({
+            "job_name": ("thd-pipeline-{}".format(
+                datetime.now().strftime("%Y%m%d%H%M%S"))),
+            'max_num_workers': 10,
+            'setup_file': os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                       'setup.py')),
+            "temp_location": working_dir + 'tmp',
+            "staging_location": working_dir + 'staging'
+        })
+
+    else:
+        runner = "DirectRunner"
+        print('Using Direct Runner for data transformation')
+
+        working_dir = '/Users/luoshixin/Personal/GCPStudy/src/tensorflow/tftransform/tmp1'
+        data_dir = '/Users/luoshixin/Downloads/data'
+
+        if os.path.exists(working_dir):
+            shutil.rmtree(working_dir)
+
+    train_data_file = os.path.join(data_dir, 'adult.data.csv')
+    test_data_file = os.path.join(data_dir, 'adult.test.csv')
+    temp_dir = os.path.join(working_dir, tempfile.mkdtemp()[1:])
+
+    pipeline_options = beam.pipeline.PipelineOptions(flags=[], **job_options)
+    with beam.Pipeline(runner, options=pipeline_options) as p:
+        with beam_impl.Context(temp_dir=temp_dir):
+            transform_data(train_data_file, test_data_file, working_dir, p)
+    # train_and_evaluate(working_dir)
