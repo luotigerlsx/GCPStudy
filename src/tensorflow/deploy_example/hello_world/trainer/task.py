@@ -38,6 +38,10 @@ def run_experiment(hparams):
                                       )
 
     run_config = tf.estimator.RunConfig()
+
+    from tensorflow.contrib import distributions
+
+
     run_config = run_config.replace(model_dir=hparams.job_dir)
     print('model dir {}'.format(run_config.model_dir))
     estimator = model.build_estimator(

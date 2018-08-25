@@ -72,8 +72,6 @@ def cnn_model_fn(features, labels, mode):
         train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
-    tf.metrics.mean
-
     eval_metric_ops = {
         'accuracy': tf.metrics.accuracy(labels=labels, predictions=predictions['classes'])
     }
@@ -104,7 +102,7 @@ def main(unused_argv):
         shuffle=True)
     mnist_classifier.train(
         input_fn=train_input_fn,
-        steps=2000)
+        steps=200)
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": eval_data},
@@ -113,6 +111,18 @@ def main(unused_argv):
         shuffle=False)
     eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
     print(eval_results)
+
+    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": eval_data},
+        num_epochs=1,
+        shuffle=False
+    )
+
+    predict_result = mnist_classifier.predict(predict_input_fn)
+
+    for r in predict_result:
+        print(r)
+
 
 
 if __name__ == "__main__":

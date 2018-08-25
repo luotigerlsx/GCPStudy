@@ -111,12 +111,12 @@ def input_fn(filename,
              shuffle=True,
              batch_size=200):
     def _input_fn():
-        dataset = tf.data.TextLineDataset(filename).map(parse_csv)
+        dataset = tf.data.TextLineDataset(filename).map(parse_csv, num_parallel_calls=3)
 
         if shuffle:
             dataset = dataset.shuffle(buffer_size=batch_size * 10)
 
-        dataset = dataset.repeat(num_epochs).batch(batch_size)
+        dataset = dataset.repeat(num_epochs).batch(batch_size).prefetch(1)
         iterator = dataset.make_one_shot_iterator()
         features, labels = iterator.get_next()
         return features, labels
@@ -130,8 +130,8 @@ if __name__ == '__main__':
 
     regressor = build_estimator(run_config)
 
-    train_file = '/Users/luoshixin/Downloads/rossmann/clean_train_csv.csv'
-    eval_file = '/Users/luoshixin/Downloads/rossmann/clean_test_csv.csv'
+    train_file = '/Users/luoshixin/Downloads/data/rossmann/clean_train_csv.csv'
+    eval_file = '/Users/luoshixin/Downloads/data/rossmann/clean_test_csv.csv'
 
     regressor.train(input_fn=input_fn(train_file, 10), max_steps=1000)
 

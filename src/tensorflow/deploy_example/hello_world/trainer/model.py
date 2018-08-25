@@ -14,9 +14,12 @@ CSV_COLUMNS = ['age', 'workclass', 'fnlwgt', 'education', 'education_num',
                'native_country', 'income_bracket', 'key']
 CSV_COLUMN_DEFAULTS = [[0], [''], [0], [''], [0], [''], [''], [''], [''], [''],
                        [0], [0], [0], [''], [''], ['nonkey']]
+
+KEY_COLUMN = 'key'
+
 LABEL_COLUMN = 'income_bracket'
 LABELS = [' <=50K', ' >50K']
-KEY_COLUMN = 'key'
+
 
 INPUT_COLUMNS = [
     # Categorical based column
@@ -40,16 +43,19 @@ INPUT_COLUMNS = [
                          ' Married-spouse-absent', ' Separated', ' Married-AF-spouse',
                          ' Widowed']
     ),
+
     tf.feature_column.categorical_column_with_vocabulary_list(
         key='relationship',
         vocabulary_list=[' Not-in-family', ' Husband', ' Wife', ' Own-child', ' Unmarried',
                          ' Other-relative']
     ),
+
     tf.feature_column.categorical_column_with_vocabulary_list(
         key='race',
         vocabulary_list=[' White', ' Black', ' Asian-Pac-Islander', ' Amer-Indian-Eskimo',
                          ' Other']
     ),
+
     tf.feature_column.categorical_column_with_vocabulary_list(
         key='gender',
         vocabulary_list=['Male', 'Female']
@@ -183,6 +189,8 @@ def input_fn(filenames,
              batch_size=200):
     file_name_dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
+    tf.data.TFRecordDataset
+
     dataset = (file_name_dataset
                .flat_map(lambda file_name: tf.data.TextLineDataset(file_name).skip(skip_header_lines))
                .map(parse_csv)
@@ -198,11 +206,12 @@ def input_fn(filenames,
 
 
 def csv_serving_input_fn():
-    """Build the serving inputs."""
+    # This is for reading a simple CSV line from input
     csv_row = tf.placeholder(
         shape=[None],
         dtype=tf.string
     )
+    # The output of this line is supposed to be a dictionary of {feature_name: feature_tensor}
     features = parse_csv(csv_row)
     features.pop(LABEL_COLUMN)
     return tf.estimator.export.ServingInputReceiver(features, {'csv_row': csv_row})

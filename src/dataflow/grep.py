@@ -14,9 +14,14 @@ limitations under the License.
 """
 
 import apache_beam as beam
+import logging
 import re
 import sys
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+logger = logging.getLogger('grep')
 
 def my_grep(line, term):
     if re.match(r'^' + re.escape(term), line):
@@ -25,6 +30,8 @@ def my_grep(line, term):
 
 class ToString(beam.DoFn):
     def process(self, element, *args, **kwargs):
+        str_rep = element[0] + str(element[1])
+        logger.info(str_rep)
         return [element[0] + str(element[1])]
 
 
@@ -44,9 +51,8 @@ if __name__ == '__main__':
      # | 'Count' >> beam.CombinePerKey(lambda values: sum(values))
      # | 'ToString' >> beam.Map(lambda x: x[0] + str(x[1]))
      # | 'ToString' >> beam.FlatMap(lambda x: [x[0] + str(x[1])])
-     # | 'ToString' >> beam.ParDo(ToString())
+     | 'ToString' >> beam.ParDo(ToString())
      | 'write' >> beam.io.WriteToText(output_prefix)
      )
-
 
     p.run().wait_until_finish()

@@ -163,3 +163,5 @@ python-docs-samples/
 *.tfrecords
 tmp
 log/
+/src/model.joblib
+data/*

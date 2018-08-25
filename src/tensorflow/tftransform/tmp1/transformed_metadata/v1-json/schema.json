@@ -1,0 +1,260 @@
+{
+  "feature": [
+    {
+      "domain": {
+        "floats": {}
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "age",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "FLOAT"
+    },
+    {
+      "domain": {
+        "floats": {}
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "capital-gain",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "FLOAT"
+    },
+    {
+      "domain": {
+        "floats": {}
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "capital-loss",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "FLOAT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "15",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_1_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "education",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "floats": {}
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "education-num",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "FLOAT"
+    },
+    {
+      "domain": {
+        "floats": {}
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "hours-per-week",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "FLOAT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": false,
+          "max": "9223372036854775807",
+          "min": "-9223372036854775808",
+          "vocabularyFile": ""
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "label",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "6",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_2_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "marital-status",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "41",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_7_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "native-country",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "14",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_3_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "occupation",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "4",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_5_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "race",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "5",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_4_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "relationship",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "1",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_6_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "sex",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": true,
+          "max": "8",
+          "min": "-1",
+          "vocabularyFile": "vocab_string_to_int_uniques"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "workclass",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    }
+  ],
+  "sparseFeature": []
+}

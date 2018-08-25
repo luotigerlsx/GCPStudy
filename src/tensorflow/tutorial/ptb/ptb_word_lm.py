@@ -225,22 +225,22 @@ class PTBModel(object):
             [make_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 
         self._initial_state = cell.zero_state(config.batch_size, data_type())
-        state = self._initial_state
+        # state = self._initial_state
         # Simplified version of tf.nn.static_rnn().
         # This builds an unrolled LSTM for tutorial purposes only.
         # In general, use tf.nn.static_rnn() or tf.nn.static_state_saving_rnn().
         #
         # The alternative version of the code below is:
         #
-        # inputs = tf.unstack(inputs, num=self.num_steps, axis=1)
-        # outputs, state = tf.nn.static_rnn(cell, inputs,
-        #                                   initial_state=self._initial_state)
-        outputs = []
-        with tf.variable_scope("RNN"):
-            for time_step in range(self.num_steps):
-                if time_step > 0: tf.get_variable_scope().reuse_variables()
-                (cell_output, state) = cell(inputs[:, time_step, :], state)
-                outputs.append(cell_output)
+        inputs = tf.unstack(inputs, num=self.num_steps, axis=1)
+        outputs, state = tf.nn.static_rnn(cell, inputs,
+                                          initial_state=self._initial_state)
+        # outputs = []
+        # with tf.variable_scope("RNN"):
+        #     for time_step in range(self.num_steps):
+        #         if time_step > 0: tf.get_variable_scope().reuse_variables()
+        #         (cell_output, state) = cell(inputs[:, time_step, :], state)
+        #         outputs.append(cell_output)
         output = tf.reshape(tf.concat(outputs, 1), [-1, config.hidden_size])
         return output, state
 
