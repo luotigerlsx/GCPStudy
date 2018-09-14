@@ -189,8 +189,6 @@ def input_fn(filenames,
              batch_size=200):
     file_name_dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
-    tf.data.TFRecordDataset
-
     dataset = (file_name_dataset
                .flat_map(lambda file_name: tf.data.TextLineDataset(file_name).skip(skip_header_lines))
                .map(parse_csv)
@@ -240,3 +238,13 @@ SERVING_FUNCTIONS = {
     'JSON': json_serving_input_fn,
     'CSV': csv_serving_input_fn
 }
+
+
+if __name__ == '__main__':
+    tf.gradients
+    tf.gather
+    tf.python.util.nest
+    tf.size
+    import tensorflow_probability.python.math.diag_jacobian
+    tf.data.Dataset.padded_batch()
+    tf.contrib.esti
