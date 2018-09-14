@@ -115,20 +115,49 @@ def _is_list_like(x):
 
 
 if __name__ == '__main__':
-    X = tf.Variable(tf.random_normal([3, 3]))
+    import timeit
 
-    A = tf.Variable(tf.random_uniform(minval=1, maxval=10, shape=[3, 3]))
-    y = tf.multiply(X, A)
 
-    init = tf.global_variables_initializer()
+    def run_test(use_sample_shape, use_pfor):
 
-    with tf.Session() as sess:
-        sess.run(init)
+        with tf.Session(graph=tf.Graph()) as sess:
 
-        sample_shape = [3, 3]
+            sample_shape = [30, 30]
 
-        # Now let's try to compute the jacobian
-        # dydx = diag_jacobian_pfor(xs=X, ys=y, use_pfor=False)
-        dydx_with_ss = diag_jacobian_pfor(xs=X, ys=y, sample_shape=sample_shape, use_pfor=False)
-        # print(sess.run([dydx, A]))
-        print(sess.run([dydx_with_ss, A]))
+            X = tf.Variable(tf.random_normal(sample_shape))
+
+            A = tf.Variable(tf.random_uniform(minval=1, maxval=10, shape=sample_shape))
+            y = tf.multiply(X, A)
+
+            init = tf.global_variables_initializer()
+
+            sess.run(init)
+
+            if use_pfor:
+                # Now let's try to compute the jacobian
+                if use_sample_shape:
+                    dydx = diag_jacobian_pfor(xs=X, ys=y, sample_shape=sample_shape, use_pfor=True)
+                else:
+                    dydx = diag_jacobian_pfor(xs=X, ys=y, use_pfor=True)
+            else:
+                from tensorflow_probability.python.math import diag_jacobian
+                if use_sample_shape:
+                    dydx = diag_jacobian(xs=X, ys=y, sample_shape=sample_shape)
+                else:
+                    dydx = diag_jacobian(xs=X, ys=y)
+            sess.run([dydx, A])
+
+
+    result_nss = timeit.timeit(
+        'run_test(use_sample_shape=False, use_pfor=True)', setup='from __main__ import run_test',
+        number=20)
+    result_ss = timeit.timeit(
+        'run_test(use_sample_shape=True, use_pfor=True)', setup='from __main__ import run_test',
+        number=20)
+    result_ss_npr = timeit.timeit(
+        'run_test(use_sample_shape=True, use_pfor=False)', setup='from __main__ import run_test',
+        number=20)
+    result_nss_npr = timeit.timeit(
+        'run_test(use_sample_shape=False, use_pfor=False)', setup='from __main__ import run_test',
+        number=20)
+    print(result_ss, result_nss, result_ss_npr, result_nss_npr)

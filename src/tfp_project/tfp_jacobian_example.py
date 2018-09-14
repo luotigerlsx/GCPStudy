@@ -4,24 +4,47 @@ import numpy as np
 
 from tensorflow.contrib import eager as tfe
 
-from diag_jacobian import diag_jacobian
-from diag_jacobian_pfor import diag_jacobian_pfor
+tfd = tfp.distributions
 
-X = tf.Variable(tf.random_normal([3, 3]))
+from diag_jacobian_pfor import diag_jacobian_pfor as diag_jacobian
 
-A = tf.Variable(tf.random_uniform(minval=1, maxval=10, shape=[3,3]))
-y = tf.multiply(X, A)
+dtype = np.float32
+with tf.Session(graph=tf.Graph()) as sess:
+    true_mean = dtype([0, 0, 0])
+    true_cov = dtype([[1, 0.25, 0.25], [0.25, 2, 0.25], [0.25, 0.25, 3]])
+    chol = tf.linalg.cholesky(true_cov)
+    target = tfd.MultivariateNormalTriL(loc=true_mean, scale_tril=chol)
 
-init = tf.global_variables_initializer()
 
-with tf.Session() as sess:
-    sess.run(init)
+    # Assume that the state is passed as a list of tensors `x` and `y`.
+    # Then the target function is defined as follows:
+    def target_fn(x, y):
+        # Stack the input tensors together
+        z = tf.concat([x, y], axis=-1) - true_mean
+        return target.log_prob(z)
 
-    sample_shape = [3, 3]
 
-    # Now let's try to compute the jacobian
-    # dydx = diag_jacobian(xs=X, ys=y)
-    dydx_with_ss = diag_jacobian(xs=X, ys=y, sample_shape=sample_shape)
-    # print(sess.run([dydx, A]))
-    print(sess.run([dydx_with_ss, A]))
-    # print(sess.run(diag_jacobian_pfor(xs=xtf, ys=ytf)))
+    sample_shape = [3, 5]
+    state = [tf.ones(sample_shape + [2], dtype=dtype),
+             tf.ones(sample_shape + [1], dtype=dtype)]
+    fn_val = target_fn(*state)
+    grad_fn = tfe.gradients_function(target_fn)
+    if tfe.executing_eagerly():
+        grads = grad_fn(*state)
+    else:
+        grads = tf.gradients(fn_val, state)
+
+    # We can either pass the `sample_shape` of the `state` or not, which impacts
+    # computational speed of `diag_jacobian`
+    _, diag_jacobian_shape_passed = diag_jacobian(
+        xs=state, ys=grads, sample_shape=tf.shape(fn_val))
+    _, diag_jacobian_shape_none = diag_jacobian(
+        xs=state, ys=grads)
+
+    diag_jacobian_shape_passed_ = sess.run(diag_jacobian_shape_passed)
+    diag_jacobian_shape_none_ = sess.run(diag_jacobian_shape_none)
+
+print('hessian computed through `diag_jacobian`, sample_shape passed: ',
+      np.concatenate(diag_jacobian_shape_passed_, -1))
+print('hessian computed through `diag_jacobian`, sample_shape skipped',
+      np.concatenate(diag_jacobian_shape_none_, -1))
